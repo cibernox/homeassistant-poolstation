@@ -2,7 +2,8 @@
   "domain": "poolstation",
   "name": "Poolstation",
   "config_flow": true,
-  "documentation": "https://www.home-assistant.io/integrations/poolstation",
+  "documentation": "https://github.com/cibernox/homeassistant-poolstation",
+  "issue_tracker": "https://github.com/cibernox/homeassistant-poolstation/issues",  
   "requirements": [
     "pypoolstation==0.4.0"
   ],
