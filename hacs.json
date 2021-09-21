@@ -1,0 +1,6 @@
+{
+  "name": "Poolstation",
+  "country": "ES",
+  "domains": ["sensor", "number"],
+  "homeassistant": "2021.9.0"
+}
