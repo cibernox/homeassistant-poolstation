@@ -10,6 +10,6 @@
   "codeowners": [
     "@cibernox"
   ],
-  "quality_scale": "silver",
-  "iot_class": "cloud_polling"
+  "iot_class": "cloud_polling",
+  "version": "0.1.0"
 }
