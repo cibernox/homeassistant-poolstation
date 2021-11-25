@@ -3,11 +3,14 @@ from datetime import timedelta
 import logging
 
 import aiohttp
-from pypoolstation import Account, Pool
+from pypoolstation import Account, Pool, AuthenticationException
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.exceptions import (
+    ConfigEntryNotReady,
+    ConfigEntryAuthFailed
+)
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
@@ -29,6 +32,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         pools = await Pool.get_all_pools(session, account=account)
     except aiohttp.ClientError as err:
         raise ConfigEntryNotReady from err
+    except AuthenticationException as err:
+        raise ConfigEntryAuthFailed from err
 
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {
         COORDINATORS: {},
@@ -72,4 +77,7 @@ class PoolstationDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def _async_update_data(self) -> None:
         """Fetch data from poolstation.net."""
-        await self._device.sync_info()
+        try:
+            await self._device.sync_info()
+        except AuthenticationException as err:
+            raise ConfigEntryAuthFailed from err
