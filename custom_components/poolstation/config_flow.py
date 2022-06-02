@@ -35,6 +35,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Handle the initial step."""
+        _LOGGER.warning('user input is %s', user_input)
         if user_input is None:
             return self.async_show_form(step_id="user", data_schema=DATA_SCHEMA)
         return await self._attempt_login(user_input)
