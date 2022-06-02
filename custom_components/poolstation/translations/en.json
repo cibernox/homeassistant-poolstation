@@ -20,7 +20,7 @@
             },
             "reauth_confirm": {
                 "data": {
-                  "email": "Password",
+                  "email": "Email",
                   "password": "Password"
                 },
                 "description": "Please update your credentials",

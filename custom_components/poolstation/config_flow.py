@@ -42,7 +42,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_reauth(self, user_input: dict[str, Any]) -> FlowResult:
         """Perform reauth upon an API authentication error."""
         self._original_data = user_input.copy()
-        _LOGGER.warning('user input is %s', user_input)
         return await self.async_step_reauth_confirm()
 
     async def async_step_reauth_confirm(
@@ -50,6 +49,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     ) -> FlowResult:
         """Dialog that informs the user that reauth is required."""
         if not user_input:
+            _LOGGER.warn('About to call _show_reauth_confirm_form. self._original_data is %s', self._original_data)
             return self._show_reauth_confirm_form()
 
         account = self._create_account(user_input)
