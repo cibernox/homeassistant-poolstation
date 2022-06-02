@@ -76,7 +76,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     def _create_account(self, user_input):
         session = async_create_clientsession(self.hass, cookie_jar=DummyCookieJar())
         return Account(
-            session, username=user_input[CONF_EMAIL], password=user_input[CONF_PASSWORD]
+            session, username=user_input[CONF_EMAIL], password=user_input[CONF_PASSWORD], logger=_LOGGER
         )
 
     async def _attempt_login(self, user_input):
