@@ -69,7 +69,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 self._original_data[CONF_EMAIL].lower()
             )
             self.hass.config_entries.async_update_entry(
-                existing_entry, data={TOKEN: token}
+                existing_entry, data={TOKEN: token, CONF_EMAIL: user_input[CONF_EMAIL], CONF_PASSWORD: user_input[CONF_PASSWORD] }
             )
             await self.hass.config_entries.async_reload(existing_entry.entry_id)
             return self.async_abort(reason="reauth_successful")
@@ -99,7 +99,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._abort_if_unique_id_configured()
             return self.async_create_entry(
                 title=user_input[CONF_EMAIL].lower(),
-                data={TOKEN: token},
+                data={TOKEN: token, CONF_EMAIL: user_input[CONF_EMAIL], CONF_PASSWORD: user_input[CONF_PASSWORD]},
             )
 
         return self.async_show_form(
