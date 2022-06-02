@@ -20,10 +20,11 @@
             },
             "reauth_confirm": {
                 "data": {
-                  "password": "[%key:common::config_flow::data::password%]"
+                  "email": "Password",
+                  "password": "Password"
                 },
-                "description": "Please update your password for {email}",
-                "title": "[%key:common::config_flow::title::reauth%]"
+                "description": "Please update your credentials",
+                "title": "Authentication with Poolstation failed"
               }
         }
     }
