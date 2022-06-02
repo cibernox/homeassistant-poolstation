@@ -109,6 +109,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, errors: dict[str, Any] | None = None
     ) -> FlowResult:
         """Show the API keys form."""
+        _LOGGER.debug("show_reauth_confirm_form initialized with original data %s", self._original_data)
         return self.async_show_form(
             step_id="reauth_confirm",
             data_schema=DATA_SCHEMA,
