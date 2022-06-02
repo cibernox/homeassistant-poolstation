@@ -6,7 +6,7 @@ import logging
 from typing import Any
 
 from aiohttp import ClientResponseError, DummyCookieJar
-from pypoolstation import Account, AuthenticationException
+from pypoolstation import AuthenticationException
 import voluptuous as vol
 
 from homeassistant import config_entries
@@ -15,6 +15,7 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
 
 from .const import DOMAIN, TOKEN
+from .util import create_account
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -76,9 +77,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     def _create_account(self, user_input):
         session = async_create_clientsession(self.hass, cookie_jar=DummyCookieJar())
-        return Account(
-            session, username=user_input[CONF_EMAIL], password=user_input[CONF_PASSWORD], logger=_LOGGER
-        )
+        return create_account(session, user_input[CONF_EMAIL], user_input[CONF_PASSWORD], _LOGGER)
 
     async def _attempt_login(self, user_input):
         errors: dict[str, str]

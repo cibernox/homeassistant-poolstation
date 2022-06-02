@@ -6,7 +6,7 @@ import aiohttp
 from pypoolstation import Account, Pool, AuthenticationException
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_TOKEN
+from homeassistant.const import CONF_TOKEN, CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import (
     ConfigEntryNotReady,
@@ -16,6 +16,7 @@ from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import COORDINATORS, DEVICES, DOMAIN
+from .util import create_account
 
 PLATFORMS = ["sensor", "number", "switch"]
 
@@ -34,7 +35,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     except aiohttp.ClientError as err:
         raise ConfigEntryNotReady from err
     except AuthenticationException as err:
-        raise ConfigEntryAuthFailed from err
+        account = create_account(session, entry.data[CONF_EMAIL], entry.data[CONF_PASSWORD], _LOGGER)
+        try:
+            token = await account.login()
+        except AuthenticationException:
+            raise ConfigEntryAuthFailed from err
+        else:
+            hass.config_entries.async_update_entry(
+                entry, data={CONF_TOKEN: token, CONF_EMAIL: entry.data[CONF_EMAIL], CONF_PASSWORD: entry.data[CONF_PASSWORD] }
+            )
+            pools = await Pool.get_all_pools(session, account=account)           
 
 
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {
