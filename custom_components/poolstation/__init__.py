@@ -42,7 +42,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             # Unfortunately the poolstation API is crap and logging with wrong credentials returns a 500 instead of a 401
             # That's why this block is probably never being called. Instead the next except will.
             raise ConfigEntryAuthFailed from err
-        except aiohttp.HTTPInternalServerError:
+        except aiohttp.ClientResponseError:
             raise ConfigEntryAuthFailed from err
         else:
             hass.config_entries.async_update_entry(
