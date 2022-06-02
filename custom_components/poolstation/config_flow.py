@@ -83,9 +83,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def _attempt_login(self, user_input):
         errors: dict[str, str]
         errors = {}
-        _LOGGER.warn('user_input before creating account is %s', user_input)
-        account = self._create_account(self, user_input)
-        _LOGGER.warn('account has been created!!')
+        account = self._create_account(user_input)
+
         try:
             token = await account.login()
         except (TimeoutError, ClientResponseError):
