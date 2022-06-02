@@ -33,6 +33,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         pools = await Pool.get_all_pools(session, account=account)
     except aiohttp.ClientError as err:
         raise ConfigEntryNotReady from err
+    except AuthenticationException as err:
+        raise ConfigEntryAuthFailed from err
+
 
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {
         COORDINATORS: {},
