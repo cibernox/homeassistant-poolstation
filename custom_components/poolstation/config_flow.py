@@ -110,10 +110,14 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, errors: dict[str, Any] | None = None
     ) -> FlowResult:
         """Show the API keys form."""
-        _LOGGER.debug("show_reauth_confirm_form initialized with original data %s", self._original_data)
+        _LOGGER.warning("show_reauth_confirm_form initialized with original data %s", self._original_data)
         return self.async_show_form(
             step_id="reauth_confirm",
-            data_schema=DATA_SCHEMA,
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_EMAIL, default=self._original_data[CONF_EMAIL]): str,
+                    vol.Required(CONF_PASSWORD): str,
+                }
+            ),
             errors=errors or {},
-            description_placeholders={CONF_EMAIL: self._original_data[CONF_EMAIL]},
         )
