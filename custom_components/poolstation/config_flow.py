@@ -1,7 +1,7 @@
 """Config flow for PoolStation integration."""
 from __future__ import annotations
 
-from asyncio import TimeoutError
+import asyncio
 import logging
 from typing import Any
 
@@ -32,6 +32,11 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
+    def __init__(self) -> None:
+        """Initialize config flow."""
+        super().__init__()
+        self._original_data: Any = None
+
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
@@ -57,7 +62,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors = {}
         try:
             token = await account.login()
-        except (TimeoutError, ClientResponseError):
+        except (asyncio.TimeoutError, ClientResponseError):
             errors["base"] = "cannot_connect"
         except AuthenticationException:
             errors["base"] = "invalid_auth"
@@ -68,15 +73,25 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             existing_entry = await self.async_set_unique_id(
                 self._original_data[CONF_EMAIL].lower()
             )
-            self.hass.config_entries.async_update_entry(
-                existing_entry, data={TOKEN: token, CONF_EMAIL: user_input[CONF_EMAIL], CONF_PASSWORD: user_input[CONF_PASSWORD] }
-            )
-            await self.hass.config_entries.async_reload(existing_entry.entry_id)
-            return self.async_abort(reason="reauth_successful")
+            if existing_entry:
+                self.hass.config_entries.async_update_entry(
+                    existing_entry,
+                    data={
+                        TOKEN: token,
+                        CONF_EMAIL: user_input[CONF_EMAIL],
+                        CONF_PASSWORD: user_input[CONF_PASSWORD],
+                    },
+                )
+                await self.hass.config_entries.async_reload(existing_entry.entry_id)
+                return self.async_abort(reason="reauth_successful")
+            return self.async_abort(reason="reauth_failed_existing")
+        return self.async_abort(reason="reauth_unsuccessful")
 
     def _create_account(self, user_input):
         session = async_create_clientsession(self.hass, cookie_jar=DummyCookieJar())
-        return create_account(session, user_input[CONF_EMAIL], user_input[CONF_PASSWORD], _LOGGER)
+        return create_account(
+            session, user_input[CONF_EMAIL], user_input[CONF_PASSWORD], _LOGGER
+        )
 
     async def _attempt_login(self, user_input):
         errors: dict[str, str]
@@ -97,7 +112,11 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._abort_if_unique_id_configured()
             return self.async_create_entry(
                 title=user_input[CONF_EMAIL].lower(),
-                data={TOKEN: token, CONF_EMAIL: user_input[CONF_EMAIL], CONF_PASSWORD: user_input[CONF_PASSWORD]},
+                data={
+                    TOKEN: token,
+                    CONF_EMAIL: user_input[CONF_EMAIL],
+                    CONF_PASSWORD: user_input[CONF_PASSWORD],
+                },
             )
 
         return self.async_show_form(
@@ -112,7 +131,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="reauth_confirm",
             data_schema=vol.Schema(
                 {
-                    vol.Required(CONF_EMAIL, default=self._original_data[CONF_EMAIL]): str,
+                    vol.Required(
+                        CONF_EMAIL, default=self._original_data[CONF_EMAIL]
+                    ): str,
                     vol.Required(CONF_PASSWORD): str,
                 }
             ),
