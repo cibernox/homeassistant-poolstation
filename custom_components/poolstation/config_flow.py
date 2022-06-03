@@ -50,7 +50,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     ) -> FlowResult:
         """Dialog that informs the user that reauth is required."""
         if not user_input:
-            _LOGGER.warn('About to call _show_reauth_confirm_form. self._original_data is %s', self._original_data)
             return self._show_reauth_confirm_form()
 
         account = self._create_account(user_input)
@@ -109,7 +108,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, errors: dict[str, Any] | None = None
     ) -> FlowResult:
         """Show the API keys form."""
-        _LOGGER.warning("show_reauth_confirm_form initialized with original data %s", self._original_data)
         return self.async_show_form(
             step_id="reauth_confirm",
             data_schema=vol.Schema(
