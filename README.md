@@ -40,4 +40,5 @@ First, you don't have to use the web or ios/android app to turn on or off your p
 ![UI widget](https://user-images.githubusercontent.com/265339/132487373-dd1b9bdd-949e-44f2-b26d-27f126aa0681.jpg)
 
 Also, you can create any kind of automations. Personally I prefer to schedule working times of the pump from home assistant with the scheduler card that from the poolstation platform.
+
 You can configure notification when some value gets out of range. I turn my filtration on only when I have excess solar production from my solar panels to save energy.
