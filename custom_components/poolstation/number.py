@@ -1,5 +1,6 @@
 """Support for Poolstation numbers."""
 from __future__ import annotations
+from typing import Final
 
 from pypoolstation import Pool
 
@@ -13,11 +14,11 @@ from . import PoolstationDataUpdateCoordinator
 from .const import COORDINATORS, DEVICES, DOMAIN
 from .entity import PoolEntity
 
-MIN_PH = 6.0
-MAX_PH = 8.0
+MIN_PH: Final = 6.0
+MAX_PH: Final = 8.0
 
-TARGET_PH_SUFFIX = " Target PH"
-TARGET_ELECTROLYSIS_SUFFIX = " Target Production"
+TARGET_PH_SUFFIX: Final = " Target PH"
+TARGET_ELECTROLYSIS_SUFFIX: Final = " Target Production"
 
 
 async def async_setup_entry(

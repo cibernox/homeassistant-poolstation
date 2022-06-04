@@ -1,6 +1,7 @@
 """The Poolstation integration."""
 from datetime import timedelta
 import logging
+from typing import Final
 
 import aiohttp
 from pypoolstation import Account, AuthenticationException, Pool
@@ -15,11 +16,11 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from .const import COORDINATORS, DEVICES, DOMAIN
 from .util import create_account
 
-PLATFORMS = ["sensor", "number", "switch"]
+PLATFORMS: Final = ["sensor", "number", "switch"]
 
-_LOGGER = logging.getLogger(__name__)
+_LOGGER: Final = logging.getLogger(__name__)
 
-UPDATE_INTERVAL = timedelta(seconds=30)
+SCAN_INTERVAL: Final = timedelta(seconds=30)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -91,7 +92,7 @@ class PoolstationDataUpdateCoordinator(DataUpdateCoordinator):
             hass,
             _LOGGER,
             name=f"{DOMAIN}-{pool.alias}",
-            update_interval=UPDATE_INTERVAL,
+            update_interval=SCAN_INTERVAL,
         )
 
     async def _async_update_data(self) -> None:

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Any
+from typing import Any, Final
 
 from aiohttp import ClientResponseError, DummyCookieJar
 from pypoolstation import AuthenticationException
@@ -17,9 +17,9 @@ from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from .const import DOMAIN, TOKEN
 from .util import create_account
 
-_LOGGER = logging.getLogger(__name__)
+_LOGGER: Final = logging.getLogger(__name__)
 
-DATA_SCHEMA = vol.Schema(
+DATA_SCHEMA: Final = vol.Schema(
     {
         vol.Required(CONF_EMAIL): str,
         vol.Required(CONF_PASSWORD): str,

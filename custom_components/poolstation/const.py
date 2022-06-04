@@ -1,7 +1,7 @@
 """Constants for the Poolstation integration."""
-DOMAIN = "poolstation"
+from typing import Final
 
-TOKEN = "token"
-
-COORDINATORS = "coordinators"
-DEVICES = "devices"
+DOMAIN: Final = "poolstation"
+TOKEN: Final = "token"
+COORDINATORS: Final = "coordinators"
+DEVICES: Final = "devices"

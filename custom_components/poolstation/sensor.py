@@ -1,5 +1,6 @@
 """Support for Poolstation sensors."""
 from __future__ import annotations
+from typing import Final
 
 from pypoolstation import Pool
 
@@ -13,10 +14,10 @@ from . import PoolstationDataUpdateCoordinator
 from .const import COORDINATORS, DEVICES, DOMAIN
 from .entity import PoolEntity
 
-PH_SUFFIX = " pH"
-TEMPERATURE_SUFFIX = " Temperature"
-SALT_SUFFIX = " Salt concentration"
-ELECTROLYSIS_SUFFIX = " Electrolysis"
+PH_SUFFIX: Final = " pH"
+TEMPERATURE_SUFFIX: Final = " Temperature"
+SALT_SUFFIX: Final = " Salt concentration"
+ELECTROLYSIS_SUFFIX: Final = " Electrolysis"
 
 
 async def async_setup_entry(
