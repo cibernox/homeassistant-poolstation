@@ -17,7 +17,15 @@ from .entity import PoolEntity
 MIN_PH: Final = 6.0
 MAX_PH: Final = 8.0
 
+MIN_ORP: Final = 600
+MAX_ORP: Final = 850
+
+MIN_CHLORINE: Final = 0.30
+MAX_CHLORINE: Final = 3.50
+
 TARGET_PH_SUFFIX: Final = " Target PH"
+TARGET_ORP_SUFFIX: Final = " Target ORP"
+TARGET_FREE_CHLORINE_SUFFIX: Final = " Target Chlorine"
 TARGET_ELECTROLYSIS_SUFFIX: Final = " Target Production"
 
 
@@ -34,6 +42,8 @@ async def async_setup_entry(
         coordinator = coordinators[pool_id]
         entities.append(PoolTargetPh(pool, coordinator))
         entities.append(PoolTargetElectrolysisProduction(pool, coordinator))
+        entities.append(PoolTargetORP(pool, coordinator))
+        entities.append(PoolTargetFreeChroline(pool, coordinator))        
 
     async_add_entities(entities)
 
@@ -62,6 +72,54 @@ class PoolTargetPh(PoolEntity, NumberEntity):
         self._attr_value = await self._pool.set_target_ph(value)
         self.async_write_ha_state()
 
+class PoolTargetORP(PoolEntity, NumberEntity):
+    """Representation of a pool's target ORP number."""
+
+    _attr_icon = "mdi:gauge"
+    _attr_max_value = MAX_ORP
+    _attr_min_value = MIN_ORP
+    _attr_step = 1
+
+    def __init__(
+        self, pool: Pool, coordinator: PoolstationDataUpdateCoordinator
+    ) -> None:
+        """Initialize the pool's target ORP."""
+        super().__init__(pool, coordinator, TARGET_ORP_SUFFIX)
+
+    @property
+    def value(self) -> float:
+        """Return the target ORP."""
+        return self._pool.target_orp
+
+    async def async_set_value(self, value: float) -> None:
+        """Set the target ORP."""
+        self._attr_value = await self._pool.set_target_orp(value)
+        self.async_write_ha_state()
+
+
+class PoolTargetFreeChroline(PoolEntity, NumberEntity):
+    """Representation of a pool's target free chroline number."""
+
+    _attr_icon = "mdi:gauge"
+    _attr_max_value = MAX_CHLORINE
+    _attr_min_value = MIN_CHLORINE
+    _attr_step = 0.01
+
+    def __init__(
+        self, pool: Pool, coordinator: PoolstationDataUpdateCoordinator
+    ) -> None:
+        """Initialize the pool's target chlorine."""
+        super().__init__(pool, coordinator, TARGET_FREE_CHLORINE_SUFFIX)
+
+    @property
+    def value(self) -> float:
+        """Return the target chlorine."""
+        return self._pool.target_clppm
+
+    async def async_set_value(self, value: float) -> None:
+        """Set the target chlorine."""
+        self._attr_value = await self._pool.set_target_clppm(value)
+        self.async_write_ha_state()
 
 class PoolTargetElectrolysisProduction(PoolEntity, NumberEntity):
     """Representation of a pool's target electrolysis number."""

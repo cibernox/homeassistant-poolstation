@@ -18,7 +18,8 @@ PH_SUFFIX: Final = " pH"
 TEMPERATURE_SUFFIX: Final = " Temperature"
 SALT_SUFFIX: Final = " Salt concentration"
 ELECTROLYSIS_SUFFIX: Final = " Electrolysis"
-
+ORP_SUFFIX: Final = " ORP"
+FREE_CHLORINE_SUFFIX: Final = " Chlorine"
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -35,6 +36,8 @@ async def async_setup_entry(
         entities.append(PoolTemperatureSensor(pool, coordinator))
         entities.append(PoolSaltConcentrationSensor(pool, coordinator))
         entities.append(PoolElectrolysisSensor(pool, coordinator))
+        entities.append(PoolORPSensor(pool, coordinator))
+        entities.append(PoolFreeChlorineSensor(pool, coordinator))        
 
     async_add_entities(entities)
 
@@ -109,3 +112,36 @@ class PoolElectrolysisSensor(PoolEntity, SensorEntity):
     def native_value(self) -> str:
         """Return the state of the electrolysis production sensor."""
         return self._pool.percentage_electrolysis
+
+class PoolORPSensor(PoolEntity, SensorEntity):
+    """Representation of a pool's ORP sensor."""
+
+    _attr_icon = "mdi:atom"
+
+    def __init__(
+        self, pool: Pool, coordinator: PoolstationDataUpdateCoordinator
+    ) -> None:
+        """Initialize the ORP sensor."""
+        super().__init__(pool, coordinator, ORP_SUFFIX)
+
+    @property
+    def native_value(self) -> str:
+        """Return the state of the ORP sensor."""
+        return self._pool.current_orp
+
+
+class PoolFreeChlorineSensor(PoolEntity, SensorEntity):
+    """Representation of a pool's free chlorine sensor."""
+
+    _attr_icon = "mdi:cup-water"
+
+    def __init__(
+        self, pool: Pool, coordinator: PoolstationDataUpdateCoordinator
+    ) -> None:
+        """Initialize the free chroline sensor."""
+        super().__init__(pool, coordinator, FREE_CHLORINE_SUFFIX)
+
+    @property
+    def native_value(self) -> str:
+        """Return the state of the free chlorine sensor."""
+        return self._pool.current_clppm
