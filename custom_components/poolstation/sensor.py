@@ -36,8 +36,10 @@ async def async_setup_entry(
         entities.append(PoolTemperatureSensor(pool, coordinator))
         entities.append(PoolSaltConcentrationSensor(pool, coordinator))
         entities.append(PoolElectrolysisSensor(pool, coordinator))
-        entities.append(PoolORPSensor(pool, coordinator))
-        entities.append(PoolFreeChlorineSensor(pool, coordinator))        
+        if pool.current_orp != None:
+            entities.append(PoolORPSensor(pool, coordinator))
+        if pool.current_clppm != None:
+            entities.append(PoolFreeChlorineSensor(pool, coordinator))        
 
     async_add_entities(entities)
 

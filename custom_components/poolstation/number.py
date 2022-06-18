@@ -42,8 +42,10 @@ async def async_setup_entry(
         coordinator = coordinators[pool_id]
         entities.append(PoolTargetPh(pool, coordinator))
         entities.append(PoolTargetElectrolysisProduction(pool, coordinator))
-        entities.append(PoolTargetORP(pool, coordinator))
-        entities.append(PoolTargetFreeChroline(pool, coordinator))        
+        if pool.current_orp != None:
+            entities.append(PoolTargetORP(pool, coordinator))
+        if pool.current_clppm != None:
+            entities.append(PoolTargetFreeChroline(pool, coordinator))        
 
     async_add_entities(entities)
 
