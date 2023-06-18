@@ -58,7 +58,7 @@ class PoolPhSensor(PoolEntity, SensorEntity):
     @property
     def native_value(self) -> str:
         """Return the state of the PH sensor."""
-        return self._pool.current_ph
+        return self.pool.current_ph
 
 
 class PoolTemperatureSensor(PoolEntity, SensorEntity):
@@ -77,7 +77,7 @@ class PoolTemperatureSensor(PoolEntity, SensorEntity):
     @property
     def native_value(self) -> str:
         """Return the state of the temperature sensor."""
-        return self._pool.temperature
+        return self.pool.temperature
 
 
 class PoolSaltConcentrationSensor(PoolEntity, SensorEntity):
@@ -95,7 +95,7 @@ class PoolSaltConcentrationSensor(PoolEntity, SensorEntity):
     @property
     def native_value(self) -> str:
         """Return the state of the salt concentration sensor."""
-        return self._pool.salt_concentration
+        return self.pool.salt_concentration
 
 
 class PoolElectrolysisSensor(PoolEntity, SensorEntity):
@@ -113,7 +113,7 @@ class PoolElectrolysisSensor(PoolEntity, SensorEntity):
     @property
     def native_value(self) -> str:
         """Return the state of the electrolysis production sensor."""
-        return self._pool.percentage_electrolysis
+        return self.pool.percentage_electrolysis
 
 class PoolORPSensor(PoolEntity, SensorEntity):
     """Representation of a pool's ORP sensor."""
@@ -129,7 +129,7 @@ class PoolORPSensor(PoolEntity, SensorEntity):
     @property
     def native_value(self) -> str:
         """Return the state of the ORP sensor."""
-        return self._pool.current_orp
+        return self.pool.current_orp
 
 
 class PoolFreeChlorineSensor(PoolEntity, SensorEntity):
@@ -146,4 +146,4 @@ class PoolFreeChlorineSensor(PoolEntity, SensorEntity):
     @property
     def native_value(self) -> str:
         """Return the state of the free chlorine sensor."""
-        return self._pool.current_clppm
+        return self.pool.current_clppm

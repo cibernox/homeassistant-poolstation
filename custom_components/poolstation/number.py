@@ -1,10 +1,13 @@
 """Support for Poolstation numbers."""
 from __future__ import annotations
-from typing import Final
+
+from collections.abc import Awaitable, Callable
+from dataclasses import dataclass
+from typing import Any
 
 from pypoolstation import Pool
 
-from homeassistant.components.number import NumberEntity
+from homeassistant.components.number import NumberEntity, NumberEntityDescription
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import PERCENTAGE
 from homeassistant.core import HomeAssistant
@@ -14,20 +17,72 @@ from . import PoolstationDataUpdateCoordinator
 from .const import COORDINATORS, DEVICES, DOMAIN
 from .entity import PoolEntity
 
-MIN_PH: Final = 6.0
-MAX_PH: Final = 8.0
+@dataclass
+class PoolstationNumberEntityDescriptionMixin:
+    """Mixin for required keys."""
 
-MIN_ORP: Final = 600
-MAX_ORP: Final = 850
+    value_fn: Callable[[Pool], int | float]
+    set_value_fn: Callable[[Pool, int | float], Awaitable[Any]]
 
-MIN_CHLORINE: Final = 0.30
-MAX_CHLORINE: Final = 3.50
 
-TARGET_PH_SUFFIX: Final = " Target PH"
-TARGET_ORP_SUFFIX: Final = " Target ORP"
-TARGET_FREE_CHLORINE_SUFFIX: Final = " Target Chlorine"
-TARGET_ELECTROLYSIS_SUFFIX: Final = " Target Production"
+@dataclass
+class PoolstationNumberEntityDescription(
+    NumberEntityDescription, PoolstationNumberEntityDescriptionMixin
+):
+    """Class describing Poolstation number entities."""
 
+MIN_PH = 6.0
+MAX_PH = 8.0
+
+MIN_ORP = 600
+MAX_ORP = 850
+
+MIN_CHLORINE = 0.30
+MAX_CHLORINE = 3.50
+
+ENTITY_DESCRIPTIONS = (
+    PoolstationNumberEntityDescription(
+        key = "target_ph",
+        name = "Target PH",
+        icon = "mdi:gauge",
+        native_max_value = MAX_PH,
+        native_min_value = MIN_PH,
+        native_step = 0.01,
+        value_fn=lambda pool: pool.target_ph,
+        set_value_fn=lambda pool, value: pool.set_target_ph(value),
+    ),
+    PoolstationNumberEntityDescription(
+        key = "target_orp",
+        name = "Target ORP",
+        icon = "mdi:gauge",
+        native_max_value = MAX_ORP,
+        native_min_value = MIN_ORP,
+        native_step = 1,
+        value_fn=lambda pool: pool.target_orp,
+        set_value_fn=lambda pool, value: pool.set_target_orp(int(value)),
+    ),
+    PoolstationNumberEntityDescription(
+        key = "target_chlorine",
+        name = "Target Chlorine",
+        icon = "mdi:gauge",
+        native_max_value = MAX_CHLORINE,
+        native_min_value = MIN_CHLORINE,
+        native_step = 0.01,
+        value_fn=lambda pool: pool.target_clppm,
+        set_value_fn=lambda pool, value: pool.set_target_clppm(value),
+    ),
+    PoolstationNumberEntityDescription(
+        key = "target_production",
+        name = "Target Production",
+        icon = "mdi:gauge",
+        native_max_value = 100,
+        native_min_value = 0,
+        native_step = 1,
+        unit_of_measurement = PERCENTAGE,
+        value_fn=lambda pool: pool.target_percentage_electrolysis,
+        set_value_fn=lambda pool, value: pool.set_target_percentage_electrolysis(int(value)),
+    ),
+)
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -40,111 +95,34 @@ async def async_setup_entry(
     entities: list[PoolEntity] = []
     for pool_id, pool in pools.items():
         coordinator = coordinators[pool_id]
-        entities.append(PoolTargetPh(pool, coordinator))
-        entities.append(PoolTargetElectrolysisProduction(pool, coordinator))
-        if pool.current_orp != None:
-            entities.append(PoolTargetORP(pool, coordinator))
-        if pool.current_clppm != None:
-            entities.append(PoolTargetFreeChroline(pool, coordinator))        
+        for description in ENTITY_DESCRIPTIONS:
+            entities.append(PoolNumberEntity(pool, coordinator, description))
 
     async_add_entities(entities)
 
+class PoolNumberEntity(PoolEntity, NumberEntity):
+    """Representation of a pool number entity."""
 
-class PoolTargetPh(PoolEntity, NumberEntity):
-    """Representation of a pool's target PH number."""
-
-    _attr_icon = "mdi:gauge"
-    _attr_max_value = MAX_PH
-    _attr_min_value = MIN_PH
-    _attr_step = 0.01
+    entity_description: PoolstationNumberEntityDescription
 
     def __init__(
-        self, pool: Pool, coordinator: PoolstationDataUpdateCoordinator
+        self,
+        pool: Pool,
+        coordinator: PoolstationDataUpdateCoordinator,
+        description: PoolstationNumberEntityDescription
     ) -> None:
         """Initialize the pool's target PH."""
-        super().__init__(pool, coordinator, TARGET_PH_SUFFIX)
+        super().__init__(pool, coordinator, " " + description.name)
+        self.entity_description = description
 
     @property
-    def value(self) -> float:
-        """Return the target PH."""
-        return self._pool.target_ph
+    def native_value(self) -> int:
+        """Return the number value."""
+        return self.entity_description.value_fn(self.coordinator.pool)
 
-    async def async_set_value(self, value: float) -> None:
-        """Set the target PH."""
-        self._attr_value = await self._pool.set_target_ph(value)
-        self.async_write_ha_state()
-
-class PoolTargetORP(PoolEntity, NumberEntity):
-    """Representation of a pool's target ORP number."""
-
-    _attr_icon = "mdi:gauge"
-    _attr_max_value = MAX_ORP
-    _attr_min_value = MIN_ORP
-    _attr_step = 1
-
-    def __init__(
-        self, pool: Pool, coordinator: PoolstationDataUpdateCoordinator
-    ) -> None:
-        """Initialize the pool's target ORP."""
-        super().__init__(pool, coordinator, TARGET_ORP_SUFFIX)
-
-    @property
-    def value(self) -> float:
-        """Return the target ORP."""
-        return self._pool.target_orp
-
-    async def async_set_value(self, value: float) -> None:
-        """Set the target ORP."""
-        self._attr_value = await self._pool.set_target_orp(value)
-        self.async_write_ha_state()
-
-
-class PoolTargetFreeChroline(PoolEntity, NumberEntity):
-    """Representation of a pool's target free chroline number."""
-
-    _attr_icon = "mdi:gauge"
-    _attr_max_value = MAX_CHLORINE
-    _attr_min_value = MIN_CHLORINE
-    _attr_step = 0.01
-
-    def __init__(
-        self, pool: Pool, coordinator: PoolstationDataUpdateCoordinator
-    ) -> None:
-        """Initialize the pool's target chlorine."""
-        super().__init__(pool, coordinator, TARGET_FREE_CHLORINE_SUFFIX)
-
-    @property
-    def value(self) -> float:
-        """Return the target chlorine."""
-        return self._pool.target_clppm
-
-    async def async_set_value(self, value: float) -> None:
-        """Set the target chlorine."""
-        self._attr_value = await self._pool.set_target_clppm(value)
-        self.async_write_ha_state()
-
-class PoolTargetElectrolysisProduction(PoolEntity, NumberEntity):
-    """Representation of a pool's target electrolysis number."""
-
-    _attr_icon = "mdi:gauge"
-    _attr_max_value = 100
-    _attr_min_value = 0
-    _attr_unit_of_measurement = PERCENTAGE
-
-    def __init__(
-        self, pool: Pool, coordinator: PoolstationDataUpdateCoordinator
-    ) -> None:
-        """Initialize the pool's target electrolysis production."""
-        super().__init__(pool, coordinator, TARGET_ELECTROLYSIS_SUFFIX)
-
-    @property
-    def value(self) -> int:
-        """Return the target electrolysis production."""
-        return int(self._pool.target_percentage_electrolysis)
-
-    async def async_set_value(self, value: float) -> None:
-        """Set the target electrolysis production."""
-        self._attr_value = await self._pool.set_target_percentage_electrolysis(
-            int(value)
+    async def async_set_native_value(self, value: float) -> None:
+        """Change to new number value."""
+        await self.entity_description.set_value_fn(
+            self.coordinator.pool, value
         )
         self.async_write_ha_state()

@@ -22,10 +22,10 @@ class PoolEntity(CoordinatorEntity):
     ) -> None:
         """Init from config, hookup pool and coordinator."""
         super().__init__(coordinator)
-        self._pool = pool
+        self.pool = pool
 
-        pool_id = self._pool.id
-        name = self._pool.alias
+        pool_id = self.pool.id
+        name = self.pool.alias
 
         self._attr_name = f"{name}{entity_suffix}"
         self._attr_unique_id = f"{pool_id}{entity_suffix}"
