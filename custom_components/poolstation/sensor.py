@@ -1,12 +1,19 @@
 """Support for Poolstation sensors."""
 from __future__ import annotations
-from typing import Final
+
+from collections.abc import Callable
+from dataclasses import dataclass
 
 from pypoolstation import Pool
 
-from homeassistant.components.sensor import SensorEntity
+from homeassistant.components.sensor import (
+    SensorEntity,
+    SensorEntityDescription,
+    SensorDeviceClass,
+    SensorStateClass
+)
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import DEVICE_CLASS_TEMPERATURE, PERCENTAGE, TEMP_CELSIUS
+from homeassistant.const import PERCENTAGE, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -14,12 +21,95 @@ from . import PoolstationDataUpdateCoordinator
 from .const import COORDINATORS, DEVICES, DOMAIN
 from .entity import PoolEntity
 
-PH_SUFFIX: Final = " pH"
-TEMPERATURE_SUFFIX: Final = " Temperature"
-SALT_SUFFIX: Final = " Salt concentration"
-ELECTROLYSIS_SUFFIX: Final = " Electrolysis"
-ORP_SUFFIX: Final = " ORP"
-FREE_CHLORINE_SUFFIX: Final = " Chlorine"
+@dataclass
+class PoolstationEntityDescriptionMixin:
+    """Mixin values for Poolstation entities."""
+    value_fn: Callable[[Pool], int | str]
+
+@dataclass
+class PoolstationSensorEntityDescription(
+    SensorEntityDescription, PoolstationEntityDescriptionMixin
+):
+    """Class describing Poolstation sensor entities."""
+    has_fn: Callable[[Pool], bool] = lambda _: True
+
+ENTITY_DESCRIPTIONS = (
+    PoolstationSensorEntityDescription(
+        key="pH",
+        name="pH",
+        icon="mdi:ph",
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda pool: pool.current_ph,
+        has_fn=lambda pool: pool.current_ph is not None,
+    ),
+    PoolstationSensorEntityDescription(
+        key="temperature",
+        name="Temperature",
+        icon="mdi:coolant-temperature",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        value_fn=lambda pool: pool.temperature,
+        has_fn=lambda pool: pool.temperature is not None,
+    ),
+    PoolstationSensorEntityDescription(
+        key="salt_concentration",
+        name="Salt Concentration",
+        icon = "mdi:shaker",
+        native_unit_of_measurement = "gr/l",
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda pool: pool.salt_concentration,
+        has_fn=lambda pool: pool.salt_concentration is not None,
+    ),
+    PoolstationSensorEntityDescription(
+        key="percentage_electrolysis",
+        name="Electrolysis",
+        native_unit_of_measurement = PERCENTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        icon = "mdi:water-percent",
+        value_fn=lambda pool: pool.percentage_electrolysis,
+        has_fn=lambda pool: pool.percentage_electrolysis is not None,
+    ),
+    PoolstationSensorEntityDescription(
+        key="current_orp",
+        name = "ORP",
+        icon = "mdi:atom",
+        device_class = SensorDeviceClass.VOLTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement = 'mV',
+        value_fn=lambda pool: pool.current_orp,
+        has_fn=lambda pool: pool.current_orp is not None,
+    ),
+    PoolstationSensorEntityDescription(
+        key="free_chlorine",
+        name="Chlorine",
+        icon = "mdi:cup-water",
+        device_class = SensorDeviceClass.VOLATILE_ORGANIC_COMPOUNDS,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement = 'ppm',
+        value_fn=lambda pool: pool.current_clppm,
+        has_fn=lambda pool: pool.current_clppm is not None,
+    ),
+)
+
+class PoolSensorEntity(PoolEntity, SensorEntity):
+    """Representation of a pool sensor."""
+
+    entity_description: PoolstationSensorEntityDescription
+
+    def __init__(
+        self,
+        pool: Pool,
+        coordinator: PoolstationDataUpdateCoordinator,
+        description: PoolstationSensorEntityDescription,
+    ) -> None:
+        """Initialize the pool's target PH."""
+        super().__init__(pool, coordinator, " " + description.name)
+        self.entity_description = description
+
+    @property
+    def native_value(self) -> str | int:
+        """Return the sensor value."""
+        return self.entity_description.value_fn(self.coordinator.pool)
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -32,118 +122,8 @@ async def async_setup_entry(
     entities: list[PoolEntity] = []
     for pool_id, pool in stations.items():
         coordinator = coordinators[pool_id]
-        entities.append(PoolPhSensor(pool, coordinator))
-        entities.append(PoolTemperatureSensor(pool, coordinator))
-        entities.append(PoolSaltConcentrationSensor(pool, coordinator))
-        entities.append(PoolElectrolysisSensor(pool, coordinator))
-        if pool.current_orp != None:
-            entities.append(PoolORPSensor(pool, coordinator))
-        if pool.current_clppm != None:
-            entities.append(PoolFreeChlorineSensor(pool, coordinator))        
+        for description in ENTITY_DESCRIPTIONS:
+            entities.append(PoolSensorEntity(pool, coordinator, description))
 
     async_add_entities(entities)
 
-
-class PoolPhSensor(PoolEntity, SensorEntity):
-    """Representation of a pool's PH sensor."""
-
-    _attr_icon = "mdi:ph"
-
-    def __init__(
-        self, pool: Pool, coordinator: PoolstationDataUpdateCoordinator
-    ) -> None:
-        """Initialize the PH sensor."""
-        super().__init__(pool, coordinator, PH_SUFFIX)
-
-    @property
-    def native_value(self) -> str:
-        """Return the state of the PH sensor."""
-        return self.pool.current_ph
-
-
-class PoolTemperatureSensor(PoolEntity, SensorEntity):
-    """Representation of a pool's temperature sensor."""
-
-    _attr_device_class = DEVICE_CLASS_TEMPERATURE
-    _attr_native_unit_of_measurement = TEMP_CELSIUS
-    _attr_icon = "mdi:coolant-temperature"
-
-    def __init__(
-        self, pool: Pool, coordinator: PoolstationDataUpdateCoordinator
-    ) -> None:
-        """Initialize the temperature sensor."""
-        super().__init__(pool, coordinator, TEMPERATURE_SUFFIX)
-
-    @property
-    def native_value(self) -> str:
-        """Return the state of the temperature sensor."""
-        return self.pool.temperature
-
-
-class PoolSaltConcentrationSensor(PoolEntity, SensorEntity):
-    """Representation of a pool's salt concentration sensor."""
-
-    _attr_icon = "mdi:shaker"
-    _attr_native_unit_of_measurement = "gr/l"
-
-    def __init__(
-        self, pool: Pool, coordinator: PoolstationDataUpdateCoordinator
-    ) -> None:
-        """Initialize the salt concentration sensor."""
-        super().__init__(pool, coordinator, SALT_SUFFIX)
-
-    @property
-    def native_value(self) -> str:
-        """Return the state of the salt concentration sensor."""
-        return self.pool.salt_concentration
-
-
-class PoolElectrolysisSensor(PoolEntity, SensorEntity):
-    """Representation of a pool's electrolysis production sensor."""
-
-    _attr_native_unit_of_measurement = PERCENTAGE
-    _attr_icon = "mdi:water-percent"
-
-    def __init__(
-        self, pool: Pool, coordinator: PoolstationDataUpdateCoordinator
-    ) -> None:
-        """Initialize the electrolysis production sensor."""
-        super().__init__(pool, coordinator, ELECTROLYSIS_SUFFIX)
-
-    @property
-    def native_value(self) -> str:
-        """Return the state of the electrolysis production sensor."""
-        return self.pool.percentage_electrolysis
-
-class PoolORPSensor(PoolEntity, SensorEntity):
-    """Representation of a pool's ORP sensor."""
-
-    _attr_icon = "mdi:atom"
-
-    def __init__(
-        self, pool: Pool, coordinator: PoolstationDataUpdateCoordinator
-    ) -> None:
-        """Initialize the ORP sensor."""
-        super().__init__(pool, coordinator, ORP_SUFFIX)
-
-    @property
-    def native_value(self) -> str:
-        """Return the state of the ORP sensor."""
-        return self.pool.current_orp
-
-
-class PoolFreeChlorineSensor(PoolEntity, SensorEntity):
-    """Representation of a pool's free chlorine sensor."""
-
-    _attr_icon = "mdi:cup-water"
-
-    def __init__(
-        self, pool: Pool, coordinator: PoolstationDataUpdateCoordinator
-    ) -> None:
-        """Initialize the free chroline sensor."""
-        super().__init__(pool, coordinator, FREE_CHLORINE_SUFFIX)
-
-    @property
-    def native_value(self) -> str:
-        """Return the state of the free chlorine sensor."""
-        return self.pool.current_clppm

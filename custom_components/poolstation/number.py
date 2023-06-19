@@ -17,6 +17,7 @@ from . import PoolstationDataUpdateCoordinator
 from .const import COORDINATORS, DEVICES, DOMAIN
 from .entity import PoolEntity
 
+
 @dataclass
 class PoolstationNumberEntityDescriptionMixin:
     """Mixin for required keys."""
@@ -31,6 +32,7 @@ class PoolstationNumberEntityDescription(
 ):
     """Class describing Poolstation number entities."""
 
+
 MIN_PH = 6.0
 MAX_PH = 8.0
 
@@ -42,47 +44,50 @@ MAX_CHLORINE = 3.50
 
 ENTITY_DESCRIPTIONS = (
     PoolstationNumberEntityDescription(
-        key = "target_ph",
-        name = "Target PH",
-        icon = "mdi:gauge",
-        native_max_value = MAX_PH,
-        native_min_value = MIN_PH,
-        native_step = 0.01,
+        key="target_ph",
+        name="Target PH",
+        icon="mdi:gauge",
+        native_max_value=MAX_PH,
+        native_min_value=MIN_PH,
+        native_step=0.01,
         value_fn=lambda pool: pool.target_ph,
         set_value_fn=lambda pool, value: pool.set_target_ph(value),
     ),
     PoolstationNumberEntityDescription(
-        key = "target_orp",
-        name = "Target ORP",
-        icon = "mdi:gauge",
-        native_max_value = MAX_ORP,
-        native_min_value = MIN_ORP,
-        native_step = 1,
+        key="target_orp",
+        name="Target ORP",
+        icon="mdi:gauge",
+        native_max_value=MAX_ORP,
+        native_min_value=MIN_ORP,
+        native_step=1,
         value_fn=lambda pool: pool.target_orp,
         set_value_fn=lambda pool, value: pool.set_target_orp(int(value)),
     ),
     PoolstationNumberEntityDescription(
-        key = "target_chlorine",
-        name = "Target Chlorine",
-        icon = "mdi:gauge",
-        native_max_value = MAX_CHLORINE,
-        native_min_value = MIN_CHLORINE,
-        native_step = 0.01,
+        key="target_chlorine",
+        name="Target Chlorine",
+        icon="mdi:gauge",
+        native_max_value=MAX_CHLORINE,
+        native_min_value=MIN_CHLORINE,
+        native_step=0.01,
         value_fn=lambda pool: pool.target_clppm,
         set_value_fn=lambda pool, value: pool.set_target_clppm(value),
     ),
     PoolstationNumberEntityDescription(
-        key = "target_production",
-        name = "Target Production",
-        icon = "mdi:gauge",
-        native_max_value = 100,
-        native_min_value = 0,
-        native_step = 1,
-        unit_of_measurement = PERCENTAGE,
+        key="target_production",
+        name="Target Production",
+        icon="mdi:gauge",
+        native_max_value=100,
+        native_min_value=0,
+        native_step=1,
+        native_unit_of_measurement=PERCENTAGE,
         value_fn=lambda pool: pool.target_percentage_electrolysis,
-        set_value_fn=lambda pool, value: pool.set_target_percentage_electrolysis(int(value)),
+        set_value_fn=lambda pool, value: pool.set_target_percentage_electrolysis(
+            int(value)
+        ),
     ),
 )
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -100,6 +105,7 @@ async def async_setup_entry(
 
     async_add_entities(entities)
 
+
 class PoolNumberEntity(PoolEntity, NumberEntity):
     """Representation of a pool number entity."""
 
@@ -109,7 +115,7 @@ class PoolNumberEntity(PoolEntity, NumberEntity):
         self,
         pool: Pool,
         coordinator: PoolstationDataUpdateCoordinator,
-        description: PoolstationNumberEntityDescription
+        description: PoolstationNumberEntityDescription,
     ) -> None:
         """Initialize the pool's target PH."""
         super().__init__(pool, coordinator, " " + description.name)
@@ -122,7 +128,5 @@ class PoolNumberEntity(PoolEntity, NumberEntity):
 
     async def async_set_native_value(self, value: float) -> None:
         """Change to new number value."""
-        await self.entity_description.set_value_fn(
-            self.coordinator.pool, value
-        )
+        await self.entity_description.set_value_fn(self.coordinator.pool, value)
         self.async_write_ha_state()
