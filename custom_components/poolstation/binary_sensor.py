@@ -41,6 +41,30 @@ ENTITY_DESCRIPTIONS = (
         is_on_fn=lambda pool: pool.waterflow_problem,
         has_fn=lambda pool: pool.waterflow_problem is not None,
     ),
+    PoolstationBinarySensorEntityDescription(
+        key="binary_input_1",
+        name="Digital input 1",
+        is_on_fn=lambda pool: pool.binary_input_1,
+        has_fn=lambda pool: pool.binary_input_1 is not None,
+    ),
+    PoolstationBinarySensorEntityDescription(
+        key="binary_input_2",
+        name="Digital input 2",
+        is_on_fn=lambda pool: pool.binary_input_2,
+        has_fn=lambda pool: pool.binary_input_2 is not None,
+    ),
+    PoolstationBinarySensorEntityDescription(
+        key="binary_input_3",
+        name="Digital input 3",
+        is_on_fn=lambda pool: pool.binary_input_3,
+        has_fn=lambda pool: pool.binary_input_3 is not None,
+    ),
+    PoolstationBinarySensorEntityDescription(
+        key="binary_input_4",
+        name="Digital input 4",
+        is_on_fn=lambda pool: pool.binary_input_4,
+        has_fn=lambda pool: pool.binary_input_4 is not None,
+    ),
 )
 
 

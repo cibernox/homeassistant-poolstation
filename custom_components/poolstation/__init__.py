@@ -22,7 +22,6 @@ _LOGGER: Final = logging.getLogger(__name__)
 
 SCAN_INTERVAL: Final = timedelta(seconds=30)
 
-
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Poolstation from a config entry."""
     session = async_create_clientsession(hass, cookie_jar=aiohttp.DummyCookieJar())
