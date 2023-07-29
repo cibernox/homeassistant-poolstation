@@ -8,9 +8,9 @@ from typing import Any
 from pypoolstation import Pool
 
 from homeassistant.components.number import (
+    NumberDeviceClass,
     NumberEntity,
     NumberEntityDescription,
-    NumberDeviceClass
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import PERCENTAGE
@@ -124,11 +124,11 @@ class PoolNumberEntity(PoolEntity, NumberEntity):
         description: PoolstationNumberEntityDescription,
     ) -> None:
         """Initialize the pool's target PH."""
-        super().__init__(pool, coordinator, " " + description.name)
+        super().__init__(pool, coordinator, " #{description.name}")
         self.entity_description = description
 
     @property
-    def native_value(self) -> int:
+    def native_value(self) -> float:
         """Return the number value."""
         return self.entity_description.value_fn(self.coordinator.pool)
 
