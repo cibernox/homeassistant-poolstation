@@ -7,7 +7,11 @@ from typing import Any
 
 from pypoolstation import Pool
 
-from homeassistant.components.number import NumberEntity, NumberEntityDescription
+from homeassistant.components.number import (
+    NumberEntity,
+    NumberEntityDescription,
+    NumberDeviceClass
+)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import PERCENTAGE
 from homeassistant.core import HomeAssistant
@@ -46,9 +50,9 @@ ENTITY_DESCRIPTIONS = (
     PoolstationNumberEntityDescription(
         key="target_ph",
         name="Target PH",
-        icon="mdi:gauge",
         native_max_value=MAX_PH,
         native_min_value=MIN_PH,
+        device_class=NumberDeviceClass.PH,
         native_step=0.01,
         value_fn=lambda pool: pool.target_ph,
         set_value_fn=lambda pool, value: pool.set_target_ph(value),
@@ -59,6 +63,7 @@ ENTITY_DESCRIPTIONS = (
         icon="mdi:gauge",
         native_max_value=MAX_ORP,
         native_min_value=MIN_ORP,
+        device_class=NumberDeviceClass.VOLTAGE,
         native_step=1,
         value_fn=lambda pool: pool.target_orp,
         set_value_fn=lambda pool, value: pool.set_target_orp(int(value)),
@@ -69,6 +74,7 @@ ENTITY_DESCRIPTIONS = (
         icon="mdi:gauge",
         native_max_value=MAX_CHLORINE,
         native_min_value=MIN_CHLORINE,
+        device_class=NumberDeviceClass.VOLATILE_ORGANIC_COMPOUNDS,
         native_step=0.01,
         value_fn=lambda pool: pool.target_clppm,
         set_value_fn=lambda pool, value: pool.set_target_clppm(value),
