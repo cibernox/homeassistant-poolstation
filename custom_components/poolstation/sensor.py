@@ -109,7 +109,7 @@ class PoolSensorEntity(PoolEntity, SensorEntity):
         description: PoolstationSensorEntityDescription,
     ) -> None:
         """Initialize the pool's target PH."""
-        super().__init__(pool, coordinator, " #{description.name}")
+        super().__init__(pool, coordinator, " " + description.name)
         self.entity_description = description
 
     @property
