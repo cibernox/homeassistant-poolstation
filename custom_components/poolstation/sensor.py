@@ -38,15 +38,26 @@ class PoolstationSensorEntityDescription(
     has_fn: Callable[[Pool], bool] = lambda _: True
 
 
-ENTITY_DESCRIPTIONS = (
-    PoolstationSensorEntityDescription(
+if hasattr(SensorDeviceClass, "PH"):
+    PH_SENSOR_DESCRIPTION = PoolstationSensorEntityDescription(
         key="pH",
         name="pH",
         device_class=SensorDeviceClass.PH,
         state_class=SensorStateClass.MEASUREMENT,
         value_fn=lambda pool: pool.current_ph,
         has_fn=lambda pool: pool.current_ph is not None,
-    ),
+    )
+else:
+    PH_SENSOR_DESCRIPTION = PoolstationSensorEntityDescription(
+        key="pH",
+        name="pH",
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda pool: pool.current_ph,
+        has_fn=lambda pool: pool.current_ph is not None,
+    )
+      
+ENTITY_DESCRIPTIONS = (
+    PH_SENSOR_DESCRIPTION,
     PoolstationSensorEntityDescription(
         key="temperature",
         name="Temperature",

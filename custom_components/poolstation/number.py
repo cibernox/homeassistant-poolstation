@@ -46,8 +46,8 @@ MAX_ORP = 850
 MIN_CHLORINE = 0.30
 MAX_CHLORINE = 3.50
 
-ENTITY_DESCRIPTIONS = (
-    PoolstationNumberEntityDescription(
+if hasattr(NumberDeviceClass, "PH"):
+    TARGET_PH_DESCRIPTION = PoolstationNumberEntityDescription(
         key="target_ph",
         name="Target PH",
         native_max_value=MAX_PH,
@@ -56,7 +56,20 @@ ENTITY_DESCRIPTIONS = (
         native_step=0.01,
         value_fn=lambda pool: pool.target_ph,
         set_value_fn=lambda pool, value: pool.set_target_ph(value),
-    ),
+    )
+else:
+    TARGET_PH_DESCRIPTION = PoolstationNumberEntityDescription(
+        key="target_ph",
+        name="Target PH",
+        native_max_value=MAX_PH,
+        native_min_value=MIN_PH,
+        native_step=0.01,
+        value_fn=lambda pool: pool.target_ph,
+        set_value_fn=lambda pool, value: pool.set_target_ph(value),
+    )
+
+ENTITY_DESCRIPTIONS = (
+    TARGET_PH_DESCRIPTION,
     PoolstationNumberEntityDescription(
         key="target_orp",
         name="Target ORP",
