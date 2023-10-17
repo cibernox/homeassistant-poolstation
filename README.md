@@ -9,6 +9,12 @@ for pool equipment like smart chlorinators of brands of the fluidra group like I
 It is very possible that this integration will also work with devices integrating in the Fluidra Connect platform with minimal changes but
 i couldn't test it myself.
 
+## Instalation with HACS
+Once you have HACS installed in your home assistant, add `git@github.com:cibernox/homeassistant-poolstation.git` as a custom repository
+for the category `Integrations`.
+
+After it's done (it might take a moment to refresh the list of integrations) you should be able to add this integration to your home assistant. 
+
 ## Current features
 
 After connecting to the poolstation API with your email and password, it will create as many devices as pools you have in your account.
