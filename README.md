@@ -13,6 +13,8 @@ i couldn't test it myself.
 Once you have HACS installed in your home assistant, add `git@github.com:cibernox/homeassistant-poolstation.git` as a custom repository
 for the category `Integrations`.
 
+![HACS-add-poolstation](https://github.com/cibernox/homeassistant-poolstation/assets/265339/98ca21ee-5a01-454b-98b7-55c2c1fa4bf3)
+
 After it's done (it might take a moment to refresh the list of integrations) you should be able to add this integration to your home assistant. 
 
 ## Current features
