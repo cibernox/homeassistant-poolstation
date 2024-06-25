@@ -20,7 +20,7 @@ PLATFORMS: Final = ["sensor", "number", "switch", "binary_sensor"]
 
 _LOGGER: Final = logging.getLogger(__name__)
 
-SCAN_INTERVAL: Final = timedelta(seconds=30)
+SCAN_INTERVAL: Final = timedelta(seconds=60)
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Poolstation from a config entry."""
