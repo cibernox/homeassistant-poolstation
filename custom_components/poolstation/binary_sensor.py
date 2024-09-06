@@ -65,6 +65,26 @@ ENTITY_DESCRIPTIONS = (
         is_on_fn=lambda pool: pool.binary_input_4,
         has_fn=lambda pool: pool.binary_input_4 is not None,
     ),
+    PoolstationBinarySensorEntityDescription(
+        key="uv",
+        name="UV",
+        is_on_fn=lambda pool: not(pool.uv),
+        has_fn=lambda pool: pool.uv is not None,
+    ),
+        PoolstationBinarySensorEntityDescription(
+        key="uv_ballast",
+        name="UV Ballast",
+        device_class=BinarySensorDeviceClass.PROBLEM,
+        is_on_fn=lambda pool: not(pool.uv_ballast_problem),
+        has_fn=lambda pool: pool.uv_ballast_problem is not None,
+    ),
+    PoolstationBinarySensorEntityDescription(
+        key="uv_fuse",
+        name="UV Fuse",
+        device_class=BinarySensorDeviceClass.PROBLEM,
+        is_on_fn=lambda pool: not(pool.uv_fuse_problem),
+        has_fn=lambda pool: pool.uv_fuse_problem is not None,
+    ),        
 )
 
 
