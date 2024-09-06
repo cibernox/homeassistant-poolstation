@@ -12,6 +12,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from aiohttp import ClientError, ClientResponseError
 
 from .const import COORDINATORS, DEVICES, DOMAIN
 from .util import create_account
@@ -98,5 +99,9 @@ class PoolstationDataUpdateCoordinator(DataUpdateCoordinator):
         """Fetch data from poolstation.net."""
         try:
             await self.pool.sync_info()
+        except ClientResponseError as err:
+            # ignore the error, most likely a server side timeout
+            _LOGGER.warning("ClientResponse error while retrieving data", err)
         except AuthenticationException as err:
             raise ConfigEntryAuthFailed from err
+            

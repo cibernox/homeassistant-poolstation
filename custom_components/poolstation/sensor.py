@@ -105,6 +105,26 @@ ENTITY_DESCRIPTIONS = (
         value_fn=lambda pool: pool.current_clppm,
         has_fn=lambda pool: pool.current_clppm is not None,
     ),
+    PoolstationSensorEntityDescription(
+        key="uv_current_timer",
+        name="UV Current Timer",
+        icon="mdi:clock",
+        device_class=SensorDeviceClass.DURATION,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement="h",
+        value_fn=lambda pool: pool.current_uv_timer,
+        has_fn=lambda pool: pool.current_uv_timer is not None,
+    ),
+    PoolstationSensorEntityDescription(
+        key="uv_total_timer",
+        name="UV Total Timer",
+        icon="mdi:clock",
+        device_class=SensorDeviceClass.DURATION,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement="h",
+        value_fn=lambda pool: pool.total_uv_timer,
+        has_fn=lambda pool: pool.uv_total_time_uv_timer is not None,
+    )    
 )
 
 
