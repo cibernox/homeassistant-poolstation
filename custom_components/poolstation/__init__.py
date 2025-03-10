@@ -23,8 +23,6 @@ _LOGGER: Final = logging.getLogger(__name__)
 
 SCAN_INTERVAL: Final = timedelta(seconds=60)
 
-auth_retries = AUTH_RETRIES
-
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Poolstation from a config entry."""
     session = async_create_clientsession(hass, cookie_jar=aiohttp.DummyCookieJar())
@@ -97,6 +95,7 @@ class PoolstationDataUpdateCoordinator(DataUpdateCoordinator):
     def __init__(self, hass: HomeAssistant, pool: Pool) -> None:
         """Initialize global Poolstation data updater."""
         self.pool = pool
+        self.auth_retries = AUTH_RETRIES  # Initialize auth_retries here
         super().__init__(
             hass,
             _LOGGER,
@@ -109,15 +108,14 @@ class PoolstationDataUpdateCoordinator(DataUpdateCoordinator):
         try:
             await self.pool.sync_info()
             # reset counter
-            auth_retries = AUTH_RETRIES
+            self.auth_retries = AUTH_RETRIES  # Reset auth_retries here
         except ClientResponseError as err:
             # ignore the error, most likely a server side timeout
             _LOGGER.warning("ClientResponse error while retrieving data", err)
         except AuthenticationException as err:
-            if auth_retries > 0:
-                auth_retries -= 1
+            if self.auth_retries > 0:
+                self.auth_retries -= 1  # Use self.auth_retries here
                 _LOGGER.warning("Ignore authentication error", err)
             else:
                 _LOGGER.warning("Raise authentication error", err)
                 raise ConfigEntryAuthFailed from err
-                
