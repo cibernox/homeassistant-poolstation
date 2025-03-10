@@ -14,7 +14,7 @@ from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from aiohttp import ClientError, ClientResponseError
 
-from .const import COORDINATORS, DEVICES, DOMAIN
+from .const import COORDINATORS, DEVICES, DOMAIN, AUTH_RETRIES
 from .util import create_account
 
 PLATFORMS: Final = ["sensor", "number", "switch", "binary_sensor"]
@@ -23,26 +23,35 @@ _LOGGER: Final = logging.getLogger(__name__)
 
 SCAN_INTERVAL: Final = timedelta(seconds=60)
 
+auth_retries = AUTH_RETRIES
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Poolstation from a config entry."""
     session = async_create_clientsession(hass, cookie_jar=aiohttp.DummyCookieJar())
     account = Account(session, token=entry.data[CONF_TOKEN], logger=_LOGGER)
 
+    _LOGGER.info("Pool station setup init.")
+
     try:
         pools = await Pool.get_all_pools(session, account=account)
     except aiohttp.ClientError as err:
+
+        _LOGGER.info("Pool station Client error.")
         raise ConfigEntryNotReady from err
     except AuthenticationException as err:
+        _LOGGER.info("Pool station Auth error.")
         account = create_account(
             session, entry.data[CONF_EMAIL], entry.data[CONF_PASSWORD], _LOGGER
         )
         try:
             token = await account.login()
         except AuthenticationException:
+            _LOGGER.info("Pool station Auth retry error.")
             # Unfortunately the poolstation API is crap and logging with wrong credentials returns a 500 instead of a 401
             # That's why this block is probably never being called. Instead the next except will.
             raise ConfigEntryAuthFailed from err
         except aiohttp.ClientResponseError:
+            _LOGGER.info("Pool station Client retry error.")
             raise ConfigEntryAuthFailed from err
         else:
             hass.config_entries.async_update_entry(
@@ -99,9 +108,16 @@ class PoolstationDataUpdateCoordinator(DataUpdateCoordinator):
         """Fetch data from poolstation.net."""
         try:
             await self.pool.sync_info()
+            # reset counter
+            auth_retries = AUTH_RETRIES
         except ClientResponseError as err:
             # ignore the error, most likely a server side timeout
             _LOGGER.warning("ClientResponse error while retrieving data", err)
         except AuthenticationException as err:
-            raise ConfigEntryAuthFailed from err
-            
+            if auth_retries > 0:
+                auth_retries -= 1
+                _LOGGER.warning("Ignore authentication error", err)
+            else:
+                _LOGGER.warning("Raise authentication error", err)
+                raise ConfigEntryAuthFailed from err
+                
