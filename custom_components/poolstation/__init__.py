@@ -48,10 +48,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             _LOGGER.warning("Pool station Auth retry error: %s", login_err)
             # Unfortunately the poolstation API is crap and logging with wrong credentials returns a 500 instead of a 401
             # That's why this block is probably never being called. Instead the next except will.
-            raise ConfigEntryAuthFailed from login_err_err
-        except aiohttp.ClientResponseError:
-            _LOGGER.warning("Pool station Client retry error: %s", err)
-            raise ConfigEntryAuthFailed from err
+            raise ConfigEntryAuthFailed from login_err
+        except aiohttp.ClientResponseError as response_err:
+            _LOGGER.warning("Pool station Client retry error: %s", response_err)
+            raise ConfigEntryAuthFailed from response_err
         else:
             hass.config_entries.async_update_entry(
                 entry,
