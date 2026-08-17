@@ -7,6 +7,7 @@ import pytest
 from aiohttp import ClientResponseError, RequestInfo
 from conftest import make_pool
 from homeassistant.exceptions import ConfigEntryAuthFailed
+from homeassistant.helpers.update_coordinator import UpdateFailed
 from pypoolstation import AuthenticationException
 from yarl import URL
 
@@ -34,14 +35,21 @@ async def test_update_data_resets_after_errors(hass):
     )
     coordinator = PoolstationDataUpdateCoordinator(hass, pool)
 
-    await coordinator._async_update_data()
+    with pytest.raises(UpdateFailed):
+        await coordinator._async_update_data()
     await coordinator._async_update_data()
 
     assert coordinator.auth_retries == AUTH_RETRIES
 
 
-async def test_update_data_client_error_ignored(hass):
-    """A client response error is ignored (server side timeout)."""
+async def test_update_data_network_error_marks_update_failed(hass):
+    """Network errors are recorded as failed updates by the coordinator.
+
+    aiohttp.ClientError propagates out of _async_update_data; the base
+    DataUpdateCoordinator records it (last_update_success = False) so
+    entities stop presenting stale values as current, and retries on the
+    next interval.
+    """
     pool = make_pool()
     request_info = RequestInfo(
         "GET", URL("https://poolstation.net/api/pool"), [], None
@@ -51,9 +59,9 @@ async def test_update_data_client_error_ignored(hass):
     )
     coordinator = PoolstationDataUpdateCoordinator(hass, pool)
 
-    result = await coordinator._async_update_data()
+    await coordinator.async_refresh()
 
-    assert result is None
+    assert coordinator.last_update_success is False
     assert coordinator.auth_retries == AUTH_RETRIES
 
 
@@ -63,9 +71,14 @@ async def test_update_data_auth_error_decrements(hass):
     pool.sync_info = AsyncMock(side_effect=AuthenticationException("expired"))
     coordinator = PoolstationDataUpdateCoordinator(hass, pool)
 
-    await coordinator._async_update_data()
+    with pytest.raises(UpdateFailed):
+        await coordinator._async_update_data()
     assert coordinator.auth_retries == AUTH_RETRIES - 1
 
-    with pytest.raises(ConfigEntryAuthFailed):
-        for _ in range(AUTH_RETRIES):
+    for _ in range(AUTH_RETRIES - 1):
+        with pytest.raises(UpdateFailed):
             await coordinator._async_update_data()
+
+    assert coordinator.auth_retries == 0
+    with pytest.raises(ConfigEntryAuthFailed):
+        await coordinator._async_update_data()
