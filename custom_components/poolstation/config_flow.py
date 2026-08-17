@@ -98,7 +98,17 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 await self.hass.config_entries.async_reload(existing_entry.entry_id)
                 return self.async_abort(reason="reauth_successful")
             return self.async_abort(reason="reauth_failed_existing")
-        return self.async_abort(reason="reauth_unsuccessful")
+        # Errors are shown on a form so the user can retry instead of the
+        # flow aborting. A failure coming from the 2FA step re-shows that
+        # step so the code can be re-entered; anything else re-shows the
+        # credentials form.
+        if CONF_AUTH_CODE in user_input:
+            return self.async_show_form(
+                step_id="reauth_two_factor",
+                data_schema=TWO_FACTOR_SCHEMA,
+                errors=errors,
+            )
+        return self._show_reauth_confirm_form(errors)
 
     def _create_account(self, user_input):
         session = async_create_clientsession(self.hass, cookie_jar=DummyCookieJar())
@@ -136,6 +146,12 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 },
             )
 
+        if CONF_AUTH_CODE in user_input:
+            # The call came from the 2FA step; retry the code instead of
+            # discarding it and jumping back to the credentials form.
+            return self.async_show_form(
+                step_id="two_factor", data_schema=TWO_FACTOR_SCHEMA, errors=errors
+            )
         return self.async_show_form(
             step_id="user", data_schema=DATA_SCHEMA, errors=errors
         )
