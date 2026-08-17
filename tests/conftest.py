@@ -2,10 +2,12 @@
 from __future__ import annotations
 
 import logging
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from homeassistant import config_entries as config_entries_module
+from homeassistant import loader as loader_module
+from homeassistant.components.network.network import async_get_network
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import frame
 from pypoolstation import Pool
@@ -28,6 +30,8 @@ async def hass(tmp_path):
     hass.config_entries = store
     await store.async_initialize()
     frame.async_setup(hass)
+    loader_module.async_setup(hass)
+    await async_get_network(hass)
     try:
         yield hass
     finally:
@@ -55,8 +59,26 @@ def make_relay(name: str = "Pump", active: bool = False) -> MagicMock:
     relay = MagicMock()
     relay.name = name
     relay.active = active
-    relay.set_active = AsyncMock(return_value=active)
+    relay.set_active = AsyncMock(side_effect=lambda value: value)
     return relay
+
+
+@pytest.fixture
+def mock_account():
+    """Provide a mocked pypoolstation.Account for config flow and setup."""
+    from pypoolstation import Pool
+
+    with (
+        patch("custom_components.poolstation.config_flow.create_account") as flow_create,
+        patch("custom_components.poolstation.config_flow.async_create_clientsession"),
+        patch("custom_components.poolstation.create_account") as setup_create,
+        # Creating an entry triggers an automatic setup; keep it hermetic.
+        patch.object(Pool, "get_all_pools", AsyncMock(return_value=[])),
+    ):
+        account = make_account()
+        flow_create.return_value = account
+        setup_create.return_value = account
+        yield account
 
 
 def make_account(login_return_value: str = "test-token") -> MagicMock:

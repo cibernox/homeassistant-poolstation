@@ -45,8 +45,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # ludeeus/hassfest-action no longer exists; run the official image directly.
+      # The image's entrypoint discovers integrations relative to its WORKDIR
+      # (/github/workspace), so the workspace must be mounted there.
       - name: Run hassfest
-        uses: ludeeus/hassfest-action@master
+        run: docker run --rm -v ${{ github.workspace }}:/github/workspace ghcr.io/home-assistant/hassfest:latest
 
   hacs:
     name: HACS validation
@@ -55,3 +58,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Run HACS validation
         uses: hacs/action@main
+        with:
+          category: integration
+          # "brands" is not satisfiable: the poolstation domain is not in the
+          # Home Assistant brands repository and we don't ship local brand assets.
+          ignore: brands

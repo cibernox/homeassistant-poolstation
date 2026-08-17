@@ -1,6 +1,8 @@
 """Smoke tests: the integration imports and entities can be instantiated."""
 from __future__ import annotations
 
+from unittest.mock import MagicMock
+
 from conftest import make_pool, make_relay
 from homeassistant.core import CoreState
 
@@ -58,6 +60,16 @@ async def test_switch_entity(hass):
 
     assert entity.is_on is True
     assert "Relay Pump" in entity.name
+
+
+def test_create_account():
+    """create_account wraps the given credentials in a pypoolstation Account."""
+    from pypoolstation import Account
+
+    from custom_components.poolstation.util import create_account
+
+    account = create_account(MagicMock(), "user@example.com", "secret")
+    assert isinstance(account, Account)
 
 
 async def test_coordinator_defaults(hass):
