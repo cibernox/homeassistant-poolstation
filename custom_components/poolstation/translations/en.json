@@ -2,6 +2,7 @@
     "config": {
         "abort": {
             "already_configured": "Device is already configured",
+            "reauth_failed_existing": "The Poolstation account is already configured for another entry",
             "reauth_successful": "Credentials updated successfully"
         },
         "error": {
