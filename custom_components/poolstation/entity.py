@@ -1,9 +1,8 @@
 """Base class for Poolstation entity."""
 from __future__ import annotations
 
-from pypoolstation import Pool
-
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from pypoolstation import Pool
 
 from . import PoolstationDataUpdateCoordinator
 from .const import DOMAIN

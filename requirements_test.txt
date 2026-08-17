@@ -1,0 +1,5 @@
+homeassistant==2026.2.3
+pypoolstation==0.6.0
+pytest>=8
+pytest-asyncio>=0.24
+pytest-cov>=5

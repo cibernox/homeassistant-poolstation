@@ -4,8 +4,6 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from pypoolstation import Pool
-
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
@@ -16,6 +14,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import PERCENTAGE, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from pypoolstation import Pool
 
 from . import PoolstationDataUpdateCoordinator
 from .const import COORDINATORS, DEVICES, DOMAIN
@@ -55,7 +54,7 @@ else:
         value_fn=lambda pool: pool.current_ph,
         has_fn=lambda pool: pool.current_ph is not None,
     )
-      
+
 ENTITY_DESCRIPTIONS = (
     PH_SENSOR_DESCRIPTION,
     PoolstationSensorEntityDescription(
@@ -124,7 +123,7 @@ ENTITY_DESCRIPTIONS = (
         native_unit_of_measurement="h",
         value_fn=lambda pool: pool.total_uv_timer,
         has_fn=lambda pool: pool.total_uv_timer is not None,
-    )    
+    )
 )
 
 

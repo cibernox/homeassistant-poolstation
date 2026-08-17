@@ -1,20 +1,18 @@
 """Config flow for PoolStation integration."""
 from __future__ import annotations
 
-import asyncio
 import logging
 from typing import Any, Final
 
-from aiohttp import ClientResponseError, DummyCookieJar
-from pypoolstation import AuthenticationException, TwoFactorAuthRequiredException
 import voluptuous as vol
-
+from aiohttp import ClientResponseError, DummyCookieJar
 from homeassistant import config_entries
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
+from pypoolstation import AuthenticationException, TwoFactorAuthRequiredException
 
-from .const import DOMAIN, TOKEN, CONF_AUTH_CODE
+from .const import CONF_AUTH_CODE, DOMAIN, TOKEN
 from .util import create_account
 
 _LOGGER: Final = logging.getLogger(__name__)
@@ -65,7 +63,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         # Update original data with new credentials
         self._original_data.update(user_input)
-        
+
         return await self._attempt_reauth(self._original_data)
 
     async def _attempt_reauth(self, user_input):
@@ -77,7 +75,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             token = await account.login(login_code=login_code)
         except TwoFactorAuthRequiredException:
             return await self.async_step_reauth_two_factor()
-        except (asyncio.TimeoutError, ClientResponseError):
+        except (TimeoutError, ClientResponseError):
             errors["base"] = "cannot_connect"
         except AuthenticationException:
             errors["base"] = "invalid_auth"
@@ -170,7 +168,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         login_data = self._original_data.copy()
         login_data[CONF_AUTH_CODE] = user_input[CONF_AUTH_CODE]
-        
+
         return await self._attempt_login(login_data)
 
     async def async_step_reauth_two_factor(
@@ -184,5 +182,5 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         login_data = self._original_data.copy()
         login_data[CONF_AUTH_CODE] = user_input[CONF_AUTH_CODE]
-        
+
         return await self._attempt_reauth(login_data)

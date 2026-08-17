@@ -5,8 +5,6 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Any
 
-from pypoolstation import Pool
-
 from homeassistant.components.number import (
     NumberDeviceClass,
     NumberEntity,
@@ -16,6 +14,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import PERCENTAGE
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from pypoolstation import Pool
 
 from . import PoolstationDataUpdateCoordinator
 from .const import COORDINATORS, DEVICES, DOMAIN

@@ -1,20 +1,19 @@
 """The Poolstation integration."""
-from datetime import timedelta
 import logging
+from datetime import timedelta
 from typing import Final
 
 import aiohttp
-from pypoolstation import Account, AuthenticationException, Pool, TwoFactorAuthRequiredException
-
+from aiohttp import ClientResponseError
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD, CONF_TOKEN
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
-from aiohttp import ClientError, ClientResponseError
+from pypoolstation import Account, AuthenticationException, Pool, TwoFactorAuthRequiredException
 
-from .const import COORDINATORS, DEVICES, DOMAIN, AUTH_RETRIES
+from .const import AUTH_RETRIES, COORDINATORS, DEVICES, DOMAIN
 from .util import create_account
 
 PLATFORMS: Final = ["sensor", "number", "switch", "binary_sensor"]
@@ -49,8 +48,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             raise ConfigEntryAuthFailed from mfa_err
         except AuthenticationException as login_err:
             _LOGGER.warning("Pool station Auth retry error: %s", login_err)
-            # Unfortunately the poolstation API is crap and logging with wrong credentials returns a 500 instead of a 401
-            # That's why this block is probably never being called. Instead the next except will.
+            # Unfortunately the poolstation API is crap and logging in with wrong credentials
+            # returns a 500 instead of a 401. That's why this block is probably never being
+            # called. Instead the next except will.
             raise ConfigEntryAuthFailed from login_err
         except aiohttp.ClientResponseError as response_err:
             _LOGGER.warning("Pool station Client retry error: %s", response_err)
@@ -109,19 +109,41 @@ class PoolstationDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def _async_update_data(self) -> dict | None:
         """Fetch data from poolstation.net."""
-        _LOGGER.debug("Starting data update for pool: %s (auth_retries: %d)", self.pool.alias, self.auth_retries)
+        _LOGGER.debug(
+            "Starting data update for pool: %s (auth_retries: %d)",
+            self.pool.alias,
+            self.auth_retries,
+        )
         try:
             await self.pool.sync_info()
-            _LOGGER.debug("Successfully updated pool data for: %s (auth_retries: %d)", self.pool.alias, self.auth_retries)
+            _LOGGER.debug(
+                "Successfully updated pool data for: %s (auth_retries: %d)",
+                self.pool.alias,
+                self.auth_retries,
+            )
             # reset counter
             self.auth_retries = AUTH_RETRIES
         except ClientResponseError as err:
             # ignore the error, most likely a server side timeout
-            _LOGGER.warning("ClientResponse error while retrieving data for pool %s: %s", self.pool.alias, err)
+            _LOGGER.warning(
+                "ClientResponse error while retrieving data for pool %s: %s",
+                self.pool.alias,
+                err,
+            )
         except AuthenticationException as err:
             if self.auth_retries > 0:
                 self.auth_retries -= 1
-                _LOGGER.warning("Ignore authentication error for pool %s (auth_retries: %d): %s", self.pool.alias, self.auth_retries, err)
+                _LOGGER.warning(
+                    "Ignore authentication error for pool %s (auth_retries: %d): %s",
+                    self.pool.alias,
+                    self.auth_retries,
+                    err,
+                )
             else:
-                _LOGGER.warning("Max retries (%d) reached for pool %s, raising authentication error: %s", AUTH_RETRIES, self.pool.alias, err)
+                _LOGGER.warning(
+                    "Max retries (%d) reached for pool %s, raising authentication error: %s",
+                    AUTH_RETRIES,
+                    self.pool.alias,
+                    err,
+                )
                 raise ConfigEntryAuthFailed from err

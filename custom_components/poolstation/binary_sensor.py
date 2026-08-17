@@ -4,17 +4,16 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from pypoolstation import Pool
-
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,
     BinarySensorEntityDescription,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
 from homeassistant.const import EntityCategory
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from pypoolstation import Pool
 
 from . import PoolstationDataUpdateCoordinator
 from .const import COORDINATORS, DEVICES, DOMAIN
@@ -100,7 +99,7 @@ ENTITY_DESCRIPTIONS = (
         entity_category=EntityCategory.DIAGNOSTIC,
         is_on_fn=lambda pool: pool.uv_fuse_problem,
         has_fn=lambda pool: pool.uv_fuse_problem is not None,
-    ),        
+    ),
 )
 
 
