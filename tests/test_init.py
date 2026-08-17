@@ -90,6 +90,28 @@ async def test_setup_entry_auth_error_relogin(hass, mock_account):
     mock_account.login.assert_awaited_once()
 
 
+async def test_setup_entry_relogin_fetch_error(hass, mock_account):
+    """A fetch failure after a successful re-login retries the setup."""
+    mock_account.login.return_value = "fresh-token"
+    with (
+        patch.object(
+            Pool,
+            "get_all_pools",
+            AsyncMock(
+                side_effect=[
+                    AuthenticationException("expired"),
+                    aiohttp.ClientError("still down"),
+                ]
+            ),
+        ),
+        patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()),
+    ):
+        entry = await make_entry(hass)
+
+    assert entry.state is ConfigEntryState.SETUP_RETRY
+    assert entry.entry_id not in hass.data.get(DOMAIN, {})
+
+
 async def test_setup_entry_auth_error_two_factor(hass, mock_account):
     """An auth error requiring 2FA fails the setup (reauth flow handles it)."""
     mock_account.login.side_effect = TwoFactorAuthRequiredException()

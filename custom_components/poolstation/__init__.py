@@ -66,7 +66,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     CONF_PASSWORD: entry.data[CONF_PASSWORD],
                 },
             )
-            pools = await Pool.get_all_pools(session, account=account)
+            try:
+                pools = await Pool.get_all_pools(session, account=account)
+            except aiohttp.ClientError as err:
+                _LOGGER.warning(
+                    "Pool station fetch error after relogin: %s", err
+                )
+                raise ConfigEntryNotReady from err
 
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {
         COORDINATORS: {},
