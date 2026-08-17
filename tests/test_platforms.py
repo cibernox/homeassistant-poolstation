@@ -172,6 +172,23 @@ async def test_number_set_value(hass):
         mock_set.assert_awaited_once_with(expected)
 
 
+async def test_device_info(hass):
+    """Entities share device info with manufacturer and model."""
+    pool = make_pool()
+    install_pools(hass, [pool])
+    coordinator = hass.data[DOMAIN][ENTRY_ID][COORDINATORS][pool.id]
+    entity = PoolSensorEntity(
+        pool, coordinator, SENSOR_DESCRIPTIONS[0]
+    )
+
+    assert entity.device_info == {
+        "identifiers": {(DOMAIN, pool.id)},
+        "manufacturer": "Fluidra",
+        "model": "Poolstation",
+        "name": pool.alias,
+    }
+
+
 async def test_switch_setup(hass):
     """One switch is created per relay."""
     relays = [make_relay(name="Pump"), make_relay(name="Light", active=True)]
