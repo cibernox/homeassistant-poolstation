@@ -28,9 +28,9 @@ class PoolEntity(CoordinatorEntity):
 
         self._attr_name = f"{name}{entity_suffix}"
         self._attr_unique_id = f"{pool_id}{entity_suffix}"
-        self._attr_device_info = {"name": name, "identifiers": {(DOMAIN, pool_id)}}
-
-    @property
-    def available(self) -> bool:
-        """Return if the entity is available."""
-        return super().available  # for now, IDK if I can tell or not.
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, pool_id)},
+            "manufacturer": "Fluidra",
+            "model": "Poolstation",
+            "name": name,
+        }

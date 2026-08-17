@@ -94,15 +94,34 @@ ENTITY_DESCRIPTIONS = (
         value_fn=lambda pool: pool.current_orp,
         has_fn=lambda pool: pool.current_orp is not None,
     ),
-    PoolstationSensorEntityDescription(
-        key="free_chlorine",
-        name="Chlorine",
-        icon="mdi:cup-water",
-        device_class=SensorDeviceClass.VOLATILE_ORGANIC_COMPOUNDS,
-        state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement="ppm",
-        value_fn=lambda pool: pool.current_clppm,
-        has_fn=lambda pool: pool.current_clppm is not None,
+    *(
+        [
+            PoolstationSensorEntityDescription(
+                key="free_chlorine",
+                name="Chlorine",
+                icon="mdi:cup-water",
+                # VOC with 'ppm' is an invalid unit combination (VOC
+                # expects ug/m3); the _PARTS variant accepts ppm and is
+                # what this measurement is.
+                device_class=SensorDeviceClass.VOLATILE_ORGANIC_COMPOUNDS_PARTS,
+                state_class=SensorStateClass.MEASUREMENT,
+                native_unit_of_measurement="ppm",
+                value_fn=lambda pool: pool.current_clppm,
+                has_fn=lambda pool: pool.current_clppm is not None,
+            )
+        ]
+        if hasattr(SensorDeviceClass, "VOLATILE_ORGANIC_COMPOUNDS_PARTS")
+        else [
+            PoolstationSensorEntityDescription(
+                key="free_chlorine",
+                name="Chlorine",
+                icon="mdi:cup-water",
+                state_class=SensorStateClass.MEASUREMENT,
+                native_unit_of_measurement="ppm",
+                value_fn=lambda pool: pool.current_clppm,
+                has_fn=lambda pool: pool.current_clppm is not None,
+            )
+        ]
     ),
     PoolstationSensorEntityDescription(
         key="uv_current_timer",
@@ -160,6 +179,10 @@ async def async_setup_entry(
     for pool_id, pool in stations.items():
         coordinator = coordinators[pool_id]
         for description in ENTITY_DESCRIPTIONS:
+            # Skip attributes this pool doesn't have (they would stay
+            # stuck on unknown).
+            if not description.has_fn(pool):
+                continue
             entities.append(PoolSensorEntity(pool, coordinator, description))
 
     async_add_entities(entities)

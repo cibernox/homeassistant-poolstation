@@ -4,13 +4,15 @@ from datetime import timedelta
 from typing import Final
 
 import aiohttp
-from aiohttp import ClientResponseError
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD, CONF_TOKEN
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from homeassistant.helpers.update_coordinator import (
+    DataUpdateCoordinator,
+    UpdateFailed,
+)
 from pypoolstation import Account, AuthenticationException, Pool, TwoFactorAuthRequiredException
 
 from .const import AUTH_RETRIES, COORDINATORS, DEVICES, DOMAIN
@@ -64,7 +66,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     CONF_PASSWORD: entry.data[CONF_PASSWORD],
                 },
             )
-            pools = await Pool.get_all_pools(session, account=account)
+            try:
+                pools = await Pool.get_all_pools(session, account=account)
+            except aiohttp.ClientError as err:
+                _LOGGER.warning(
+                    "Pool station fetch error after relogin: %s", err
+                )
+                raise ConfigEntryNotReady from err
 
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {
         COORDINATORS: {},
@@ -103,7 +111,9 @@ class PoolstationDataUpdateCoordinator(DataUpdateCoordinator):
         super().__init__(
             hass,
             _LOGGER,
-            name=f"{DOMAIN}-{pool.alias}",
+            # pool.alias is only populated after the first sync, so fall
+            # back to the pool id for the initial (logging) name.
+            name=f"{DOMAIN}-{pool.alias or pool.id}",
             update_interval=SCAN_INTERVAL,
         )
 
@@ -123,27 +133,17 @@ class PoolstationDataUpdateCoordinator(DataUpdateCoordinator):
             )
             # reset counter
             self.auth_retries = AUTH_RETRIES
-        except ClientResponseError as err:
-            # ignore the error, most likely a server side timeout
-            _LOGGER.warning(
-                "ClientResponse error while retrieving data for pool %s: %s",
-                self.pool.alias,
-                err,
-            )
         except AuthenticationException as err:
             if self.auth_retries > 0:
                 self.auth_retries -= 1
-                _LOGGER.warning(
-                    "Ignore authentication error for pool %s (auth_retries: %d): %s",
-                    self.pool.alias,
-                    self.auth_retries,
-                    err,
-                )
-            else:
-                _LOGGER.warning(
-                    "Max retries (%d) reached for pool %s, raising authentication error: %s",
-                    AUTH_RETRIES,
-                    self.pool.alias,
-                    err,
-                )
-                raise ConfigEntryAuthFailed from err
+                raise UpdateFailed(
+                    f"Authentication error for pool {self.pool.alias} "
+                    f"({self.auth_retries} retries left): {err}"
+                ) from err
+            _LOGGER.warning(
+                "Max retries (%d) reached for pool %s, raising authentication error: %s",
+                AUTH_RETRIES,
+                self.pool.alias,
+                err,
+            )
+            raise ConfigEntryAuthFailed from err

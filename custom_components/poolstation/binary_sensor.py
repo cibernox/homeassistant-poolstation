@@ -115,6 +115,10 @@ async def async_setup_entry(
     for pool_id, pool in pools.items():
         coordinator = coordinators[pool_id]
         for description in ENTITY_DESCRIPTIONS:
+            # Skip attributes this pool doesn't have (they would stay
+            # stuck on unknown).
+            if not description.has_fn(pool):
+                continue
             entities.append(PoolBinarySensorEntity(pool, coordinator, description))
 
     async_add_entities(entities)

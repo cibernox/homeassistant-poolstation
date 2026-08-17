@@ -98,6 +98,28 @@ async def test_sensor_values(hass):
     assert values == [7.1, 22.5, 3.4, 64, 780, 1.2, 3.5, 102.0]
 
 
+async def test_sensor_setup_skips_absent_attributes(hass):
+    """Only sensors for attributes the pool actually has are created."""
+    pool = make_pool(
+        current_uv_timer=None,
+        total_uv_timer=None,
+        current_clppm=None,
+        temperature=None,
+    )
+    install_pools(hass, [pool])
+    async_add_entities = MagicMock()
+
+    await sensor_setup(hass, make_config_entry(), async_add_entities)
+
+    entities = async_add_entities.call_args[0][0]
+    created_keys = {entity.entity_description.key for entity in entities}
+    assert "uv_current_timer" not in created_keys
+    assert "uv_total_timer" not in created_keys
+    assert "free_chlorine" not in created_keys
+    assert "temperature" not in created_keys
+    assert "pH" in created_keys
+
+
 async def test_sensor_multiple_pools(hass):
     """Entities are created per pool."""
     pool_a = make_pool(pool_id="a")
@@ -148,6 +170,23 @@ async def test_number_set_value(hass):
         with patch.object(entity, "async_write_ha_state"):
             await entity.async_set_native_value(value)
         mock_set.assert_awaited_once_with(expected)
+
+
+async def test_device_info(hass):
+    """Entities share device info with manufacturer and model."""
+    pool = make_pool()
+    install_pools(hass, [pool])
+    coordinator = hass.data[DOMAIN][ENTRY_ID][COORDINATORS][pool.id]
+    entity = PoolSensorEntity(
+        pool, coordinator, SENSOR_DESCRIPTIONS[0]
+    )
+
+    assert entity.device_info == {
+        "identifiers": {(DOMAIN, pool.id)},
+        "manufacturer": "Fluidra",
+        "model": "Poolstation",
+        "name": pool.alias,
+    }
 
 
 async def test_switch_setup(hass):
@@ -210,6 +249,28 @@ async def test_binary_sensor_setup(hass):
     entities = async_add_entities.call_args[0][0]
     assert len(entities) == len(BINARY_SENSOR_DESCRIPTIONS)
     assert all(isinstance(entity, PoolBinarySensorEntity) for entity in entities)
+
+
+async def test_binary_sensor_setup_skips_absent_attributes(hass):
+    """Only binary sensors for attributes the pool actually has are made."""
+    pool = make_pool(
+        uv_available=None,
+        uv_enabled=None,
+        uv_on=None,
+        uv_ballast_problem=None,
+        uv_fuse_problem=None,
+    )
+    install_pools(hass, [pool])
+    async_add_entities = MagicMock()
+
+    await binary_sensor_setup(hass, make_config_entry(), async_add_entities)
+
+    entities = async_add_entities.call_args[0][0]
+    created_keys = {entity.entity_description.key for entity in entities}
+    assert "uv_available" not in created_keys
+    assert "uv_enabled" not in created_keys
+    assert "uv_light" not in created_keys
+    assert "water_flow" in created_keys
 
 
 async def test_binary_sensor_values(hass):
