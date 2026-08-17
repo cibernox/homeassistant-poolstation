@@ -1,15 +1,15 @@
 {
   "domain": "poolstation",
   "name": "Poolstation",
+  "codeowners": [
+    "@cibernox"
+  ],
   "config_flow": true,
   "documentation": "https://github.com/cibernox/homeassistant-poolstation",
+  "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/cibernox/homeassistant-poolstation/issues",
   "requirements": [
     "pypoolstation==0.6.0"
   ],
-  "codeowners": [
-    "@cibernox"
-  ],
-  "iot_class": "cloud_polling",
   "version": "0.1.6"
 }
