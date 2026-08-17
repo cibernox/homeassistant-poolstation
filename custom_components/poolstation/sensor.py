@@ -160,6 +160,10 @@ async def async_setup_entry(
     for pool_id, pool in stations.items():
         coordinator = coordinators[pool_id]
         for description in ENTITY_DESCRIPTIONS:
+            # Skip attributes this pool doesn't have (they would stay
+            # stuck on unknown).
+            if not description.has_fn(pool):
+                continue
             entities.append(PoolSensorEntity(pool, coordinator, description))
 
     async_add_entities(entities)
